@@ -10,10 +10,18 @@ user_states = {}
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        "👋 Assalamualaikum! WhatsApp session ID hasil karne ke liye apna number bhejein (without +).\n\nExample: 923001234567"
+        "👋 *Welcome to Sarkar-MD Session Generator!*\n\n"
+        "I'm *ArslanMD Official*, the developer of this bot. Yeh bot aapko WhatsApp session ID generate karne mein madad karega.\n\n"
+        "📌 *Step 1:* Apna number bhejein (without '+'), e.g., `9232370459..`\n"
+        "📌 *Step 2:* Aapko pairing code milega\n"
+        "📌 *Step 3:* WhatsApp → Linked Devices → Add Device\n"
+        "📌 *Step 4:* 30 seconds baad /session likhein session ID lene ke liye\n\n"
+        "🔗 *YouTube:* [ArslanMD Official](https://youtube.com/@arslanmdofficial?si=QgcrLCaRz-Pqya-n)\n"
+        "🔗 *WhatsApp Channel:* [Join Now](https://whatsapp.com/channel/0029VarfjW04tRrmwfb8x306)\n\n"
+        "⚙️ Bot banaya gaya by *ArslanMD Official* — stay connected! 💻",
+        parse_mode="Markdown"
     )
     user_states[update.effective_chat.id] = "waiting_for_number"
-
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
     user_input = update.message.text.strip()
