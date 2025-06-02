@@ -1,81 +1,49 @@
-import requests
-from telegram import Update, ForceReply
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
+import telebot
+from flask import Flask
+import threading
 
-# Replace this with your actual Telegram Bot Token
-BOT_TOKEN = "7729339808:AAH1wUH6pmH7qUoVZvZnbQj44-uPUC0S2sI"
+# 🔒 Apna Telegram Bot Token yahan daalo
+BOT_TOKEN = '7729339808:AAH1wUH6pmH7qUoVZvZnbQj44-uPUC0S2sI'
+bot = telebot.TeleBot(BOT_TOKEN)
 
-# Store user states (number entered or not)
-user_states = {}
-
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(
-        "👋 *Welcome to Sarkar-MD Session Generator!*\n\n"
-        "I'm *ArslanMD Official*, the developer of this bot. Yeh bot aapko WhatsApp session ID generate karne mein madad karega.\n\n"
-        "📌 *Step 1:* Apna number bhejein (without '+'), e.g., `9232370459..`\n"
-        "📌 *Step 2:* Aapko pairing code milega\n"
-        "📌 *Step 3:* WhatsApp → Linked Devices → Add Device\n"
-        "📌 *Step 4:* 30 seconds baad /session likhein session ID lene ke liye\n\n"
-        "🔗 *YouTube:* [ArslanMD Official](https://youtube.com/@arslanmdofficial?si=QgcrLCaRz-Pqya-n)\n"
-        "🔗 *WhatsApp Channel:* [Join Now](https://whatsapp.com/channel/0029VarfjW04tRrmwfb8x306)\n\n"
-        "⚙️ Bot banaya gaya by *ArslanMD Official* — stay connected! 💻",
-        parse_mode="Markdown"
+# ✅ Welcome Message
+@bot.message_handler(commands=['start'])
+def send_welcome(message):
+    welcome_text = (
+        "👋 Welcome to *Sarkar-MD Session Generator Bot!*\n\n"
+        "📌 *Developer:* ArslanMD Official\n"
+        "📺 *YouTube:* [Click Here](https://youtube.com/@arslanmdofficial?si=QgcrLCaRz-Pqya-n)\n"
+        "📱 *WhatsApp Channel:* [Join Now](https://whatsapp.com/channel/0029VarfjW04tRrmwfb8x306)\n\n"
+        "🔐 Send your phone number with country code (without +) to get started."
     )
-    user_states[update.effective_chat.id] = "waiting_for_number"
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chat_id = update.effective_chat.id
-    user_input = update.message.text.strip()
+    bot.send_message(message.chat.id, welcome_text, parse_mode='Markdown')
 
-    if user_states.get(chat_id) == "waiting_for_number":
-        if not user_input.isdigit():
-            await update.message.reply_text("❌ Sirf numbers bhejein. Format: 923001234567")
-            return
-        
-        await update.message.reply_text("🔄 Pairing code hasil kiya ja raha hai...")
-
-        try:
-            response = requests.get(f"https://sarkar-md-session-generator.koyeb.app/code?number={user_input}")
-            if response.status_code == 200:
-                code = response.text
-                await update.message.reply_text(
-                    f"✅ Pairing code: `{code}`\n\n🔗 WhatsApp open karen → Linked Devices → Add Device → Pair with code\n\n⌛ 30 seconds ke baad /session likhein apna session hasil karne ke liye.",
-                    parse_mode='Markdown'
-                )
-                user_states[chat_id] = user_input  # Save number for session later
-            else:
-                await update.message.reply_text("❌ Code lene mein error aaya. Dobara koshish karein.")
-        except Exception as e:
-            await update.message.reply_text(f"⚠️ Error: {e}")
-    
+# ✅ Yeh example handler hai — apna logic yahan daalo
+@bot.message_handler(func=lambda m: True)
+def echo_all(message):
+    phone = message.text.strip()
+    if phone.isdigit():
+        bot.reply_to(message, f"📲 Pairing code banaya ja raha hai for: `{phone}`", parse_mode="Markdown")
+        # Yahan apna Koyeb ya backend logic daal do jo session ID banata hai
+        session_id = "Sarkarmd$eyJzZXNzaW9uIjogIkV4YW1wbGUifQ=="  # Sample ID
+        bot.send_message(message.chat.id, f"✅ Session ID:\n`{session_id}`", parse_mode="Markdown")
     else:
-        await update.message.reply_text("❗ Pehle /start likhein aur apna number bhejein.")
+        bot.reply_to(message, "❌ Invalid number. Please send digits only (with country code, no +).")
 
-async def get_session(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chat_id = update.effective_chat.id
-    number = user_states.get(chat_id)
+# ✅ Flask App for Render health check
+app = Flask(__name__)
 
-    if not number or not number.startswith("92"):
-        await update.message.reply_text("❗ Pehle apna number bhejein. /start likhein dobara shuru karne ke liye.")
-        return
+@app.route('/')
+def home():
+    return "Bot is running fine!"
 
-    await update.message.reply_text("🔍 Session ID hasil ki ja rahi hai...")
+def run_flask():
+    app.run(host="0.0.0.0", port=8000)
 
-    try:
-        response = requests.get(f"https://sarkar-md-session-generator.koyeb.app/getSession?number={number}")
-        if response.status_code == 200 and response.text.startswith("Sarkarmd$"):
-            await update.message.reply_text(f"✅ Session ID mil gaya:\n\n`{response.text}`", parse_mode='Markdown')
-            user_states.pop(chat_id)
-        else:
-            await update.message.reply_text("❌ Abhi tak WhatsApp pair nahi hua. Thodi dair baad /session likhein.")
-    except Exception as e:
-        await update.message.reply_text(f"⚠️ Error: {e}")
+# ✅ Start Flask in background
+flask_thread = threading.Thread(target=run_flask)
+flask_thread.start()
 
-if __name__ == '__main__':
-    app = ApplicationBuilder().token(BOT_TOKEN).build()
-
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("session", get_session))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-
-    print("✅ Bot is running...")
-    app.run_polling()
+# ✅ Start Telegram polling
+print("✅ Bot is running with polling...")
+bot.infinity_polling()
