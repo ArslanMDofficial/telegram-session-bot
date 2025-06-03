@@ -3,7 +3,7 @@ from flask import Flask
 import threading
 
 # 🔒 Apna Telegram Bot Token yahan daalo
-BOT_TOKEN = '7729339808:AAH1wUH6pmH7qUoVZvZnbQj44-uPUC0S2sI'
+BOT_TOKEN = '7729339808:AAFidl9o1vk3jmZui4J3toChJL0RJMImQzs'
 bot = telebot.TeleBot(BOT_TOKEN)
 
 # ✅ Welcome Message
