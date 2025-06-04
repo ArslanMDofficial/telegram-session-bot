@@ -25,7 +25,7 @@ def generate_session(message):
     if phone.isdigit():  
         bot.send_message(message.chat.id, f"⏳ Pairing code banaya ja raha hai for `{phone}`...", parse_mode="Markdown")  
         try:  
-            response = requests.get(f"https://sarkar-md-session.koyeb.app/number?phone={phone}")  
+            response = requests.get(f"https://sarkar-md-session-generator.koyeb.app/pair/number?phone={phone}")  
             if response.status_code == 200:  
                 result = response.json()  
                 if 'session' in result:  
